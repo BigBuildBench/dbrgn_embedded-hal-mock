@@ -1,0 +1,58 @@
+on:
+  # trigger on pushes to the main branch
+  push:
+    branches:
+      - main
+  # trigger on all pull requests
+  pull_request:
+  # enable manual triggering
+  workflow_dispatch:
+
+name: CI
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    env: {"RUSTFLAGS": "-D warnings"}
+    strategy:
+      matrix:
+        toolchain:
+          - "1.75"
+          - "stable"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+
+      # Diagnostics
+      - name: Show versions
+        run: |
+          rustc --version
+          cargo --version
+
+      # Build main crate
+      - name: Build
+        run: cargo build
+      - name: Build (all features)
+        if: ${{ matrix.toolchain == '1.75' }}
+        run: cargo build --all-features
+
+      # Test main crate
+      - name: Test
+        run: cargo test
+      - name: Test (all features)
+        if: ${{ matrix.toolchain == '1.75' }}
+        run: cargo test --all-features
+
+  # Check code formatting
+  format:
+    name: Check code formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - run: cargo +nightly fmt --all -- --check

@@ -1,0 +1,8 @@
+*.swp
+/target
+**/*.rs.bk
+Cargo.lock
+
+# IDEs
+.vscode
+.idea
